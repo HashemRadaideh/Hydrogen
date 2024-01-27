@@ -9,7 +9,7 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 
-use crate::hash::validate;
+use crate::hash::{exec, validate};
 use crate::repl::cell::Cell;
 use crate::repl::linebuffer::LineBuffer;
 use crate::repl::mode::CursorMode;
@@ -29,18 +29,23 @@ fn print_message(stdout: &mut Stdout, msg: &str) -> Result<()> {
     Ok(())
 }
 
+fn prompt(stdout: &mut Stdout, prompt: &str) -> Result<()> {
+    stdout
+        .execute(SetForegroundColor(Color::Blue))?
+        .execute(Print(prompt))?
+        .execute(ResetColor)?;
+    stdout.flush()?;
+    Ok(())
+}
+
 pub fn repl(mode: String) -> Result<()> {
     let edit_mode = CursorMode::new(mode);
     let mut line = LineBuffer::new();
     let mut stdout: Stdout = stdout();
 
+    terminal::enable_raw_mode()?;
     'repl: loop {
-        terminal::enable_raw_mode()?;
-        stdout
-            .execute(SetForegroundColor(Color::Blue))?
-            .execute(Print("> "))?
-            .execute(ResetColor)?;
-        stdout.flush()?;
+        prompt(&mut stdout, "> ")?;
 
         let mut start: Cell = position()
             .map(|(col, row)| Cell::new(col, row))
@@ -67,7 +72,20 @@ pub fn repl(mode: String) -> Result<()> {
                             stdout.flush()?;
                         }
                         KeyCode::Enter => {
-                            break 'input;
+                            let (ast, ok) = validate(&line.buffer);
+                            if ok {
+                                stdout.execute(SetForegroundColor(Color::Red))?;
+                                terminal::disable_raw_mode()?;
+                                println!();
+                                exec(ast.unwrap());
+                                terminal::enable_raw_mode()?;
+                                stdout.execute(ResetColor)?;
+
+                                line.buffer.clear();
+                                break 'input;
+                            } else {
+                                prompt(&mut stdout, "... ")?;
+                            }
                         }
                         KeyCode::Backspace => {}
                         KeyCode::Delete => {}
@@ -141,14 +159,9 @@ pub fn repl(mode: String) -> Result<()> {
                 },
             }
         }
-
-        terminal::disable_raw_mode()?;
-        println!();
-        validate(&line.buffer);
-        line.buffer.clear();
     }
 
-        terminal::disable_raw_mode()?;
-        println!();
+    terminal::disable_raw_mode()?;
+    println!();
     Ok(())
 }

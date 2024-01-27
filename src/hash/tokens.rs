@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum TokenType {
     String,
-    Integear,
+    Integer,
     Unknown,
     Whitespace,
     EOF,

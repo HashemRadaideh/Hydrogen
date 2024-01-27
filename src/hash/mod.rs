@@ -1,22 +1,21 @@
-use self::{ast::ASTree, lexer::Lexer, parser::Parser};
+use self::{ast::ASTree, parser::Parser};
 
 pub mod ast;
 pub mod lexer;
 pub mod parser;
 pub mod tokens;
 
-pub fn validate(content: &String) -> bool {
-    let mut lexer = Lexer::new(&content);
-
-    let mut parser = Parser::new(lexer.lex());
+pub fn validate(content: &String) -> (Option<ASTree>, bool) {
+    let mut parser = Parser::new(&content);
 
     let ast = parser.parse();
 
-    print_ast(ast);
-
-    true
+    match ast {
+        Ok(tree) => (Some(tree), true),
+        Err(_) => (None, false),
+    }
 }
 
-fn print_ast(ast: ASTree) {
+pub fn exec(ast: ASTree) {
     println!("{:?}", ast);
 }

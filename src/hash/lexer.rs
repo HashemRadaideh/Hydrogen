@@ -1,73 +1,81 @@
-use std::char;
+use std::{char, iter::Peekable, str::Chars};
 
 use super::tokens::{Token, TokenType};
 
-pub struct Lexer {
-    file: String,
-    current: char,
-    index: usize,
+pub struct Lexer<'a> {
+    source: Peekable<Chars<'a>>,
 }
 
-impl Lexer {
-    pub fn new(file: &String) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(source: &'a String) -> Self {
         Self {
-            file: file.to_owned(),
-            current: file.chars().nth(0).unwrap(),
-            index: 0,
+            source: source.chars().peekable(),
         }
     }
 
-    pub fn lex(&mut self) -> Vec<Token> {
-        let mut tokens: Vec<Token> = vec![];
+    fn next_char(&mut self) -> char {
+        self.source.next().unwrap_or_default()
+    }
 
-        while self.current != '\0' {
-            let token = if self.current.is_alphabetic() {
-                self.collect_string()
-            } else if self.current.is_numeric() {
-                self.collect_number()
-            } else if self.current.is_whitespace() {
-                let token = Token::new(format!("{}", self.current), TokenType::Whitespace);
-                self.next();
-                token
-            } else {
-                let token = Token::new(format!("{}", self.current), TokenType::Unknown);
-                self.next();
-                token
-            };
+    fn peek_char(&mut self) -> Option<&char> {
+        self.source.peek()
+    }
 
-            match token.token {
-                TokenType::Whitespace => continue,
-                _ => {
-                    tokens.push(token);
+    pub fn lex(&mut self) -> Token {
+        match self.source.peek() {
+            Some(c) => {
+                if c.is_whitespace() {
+                    Token::new(self.next_char().to_string(), TokenType::Whitespace)
+                } else if c.is_alphabetic() {
+                    self.collect_string()
+                } else if c.is_numeric() {
+                    self.collect_number()
+                } else {
+                    Token::new(self.next_char().to_string(), TokenType::Unknown)
                 }
             }
+            None => Token::new("\0".to_string(), TokenType::EOF),
         }
-        tokens.push(Token::new("\0".to_string(), TokenType::EOF));
-
-        return tokens;
     }
 
-    fn next(&mut self) {
-        self.index += 1;
-        self.current = self.file.chars().nth(self.index).unwrap_or_default();
+    pub fn peek(&mut self) -> Token {
+        let mut peek_lexer = Lexer {
+            source: self.source.clone(),
+        };
+
+        peek_lexer.lex()
     }
 
     fn collect_string(&mut self) -> Token {
         let mut buffer = String::new();
-        while self.current.is_alphanumeric() {
-            buffer.push(self.current);
-            self.next();
+        loop {
+            buffer.push(self.next_char());
+            match self.peek_char() {
+                Some(c) => {
+                    if !c.is_alphanumeric() {
+                        break;
+                    }
+                }
+                None => break,
+            }
         }
         Token::new(buffer, TokenType::String)
     }
 
     fn collect_number(&mut self) -> Token {
         let mut buffer = String::new();
-        while self.current.is_alphanumeric() {
-            buffer.push(self.current);
-            self.next();
+        loop {
+            buffer.push(self.next_char());
+            match self.peek_char() {
+                Some(c) => {
+                    if !c.is_alphanumeric() {
+                        break;
+                    }
+                }
+                None => break,
+            }
         }
-        Token::new(buffer, TokenType::Integear)
+        Token::new(buffer, TokenType::Integer)
     }
 }
 
