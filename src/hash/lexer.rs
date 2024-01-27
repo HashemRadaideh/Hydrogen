@@ -2,13 +2,14 @@ use std::{char, iter::Peekable, str::Chars};
 
 use super::tokens::{Position, Token};
 
+#[derive(Debug, Clone)]
 pub struct Lexer<'a> {
     source: Peekable<Chars<'a>>,
     position: Position,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a String) -> Self {
+    pub fn new(source: &'a str) -> Self {
         Self {
             source: source.chars().peekable(),
             position: Position { col: 1, row: 1 },
@@ -40,19 +41,169 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn lex(&mut self) -> Token {
-        match self.source.peek() {
-            Some(c) => {
+        match self.peek_char() {
+            Some(&c) => {
                 if c.is_whitespace() {
                     self.consume_whitespace()
                 } else if c.is_alphabetic() {
                     self.collect_id()
-                } else if c == &'"' {
+                } else if c == '"' {
                     self.collect_string()
                 } else if c.is_numeric() {
                     self.collect_number()
                 } else {
                     let (position, current) = self.next_char();
-                    Token::Unknown(position, current.to_string())
+                    match current {
+                        '(' => Token::LeftParenthesis(position),
+                        ')' => Token::RightParenthesis(position),
+                        '{' => Token::LeftBrace(position),
+                        '}' => Token::RightBrace(position),
+                        '[' => Token::LeftBracket(position),
+                        ']' => Token::RightBracket(position),
+                        '?' => Token::QuestionMark(position),
+                        '$' => Token::DollarSign(position),
+                        '#' => Token::Hash(position),
+                        ':' => Token::Colon(position),
+                        '.' => Token::Point(position),
+                        '@' => Token::At(position),
+                        '^' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::CaretEqual(position)
+                                } else {
+                                    Token::Caret(position)
+                                }
+                            }
+                            None => Token::Caret(position),
+                        },
+                        '%' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::PercentEqual(position)
+                                } else {
+                                    Token::Percent(position)
+                                }
+                            }
+                            None => Token::Percent(position),
+                        },
+                        '+' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::PlusEqual(position)
+                                } else {
+                                    Token::Plus(position)
+                                }
+                            }
+                            None => Token::Plus(position),
+                        },
+                        '-' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::MinusEqual(position)
+                                } else {
+                                    Token::Minus(position)
+                                }
+                            }
+                            None => Token::Minus(position),
+                        },
+                        '*' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::AsteriskEqual(position)
+                                } else {
+                                    Token::Asterisk(position)
+                                }
+                            }
+                            None => Token::Asterisk(position),
+                        },
+                        '/' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '/' {
+                                    self.consume_comment()
+                                } else if c == '*' {
+                                    self.consume_multiline_comment()
+                                } else if c == '=' {
+                                    self.next_char();
+                                    Token::SlashEqual(position)
+                                } else {
+                                    Token::Slash(position)
+                                }
+                            }
+                            None => Token::Slash(position),
+                        },
+                        '=' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::Equals(position)
+                                } else {
+                                    Token::Equal(position)
+                                }
+                            }
+                            None => Token::Equal(position),
+                        },
+                        '!' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::NotEqual(position)
+                                } else {
+                                    Token::ExplinationMark(position)
+                                }
+                            }
+                            None => Token::ExplinationMark(position),
+                        },
+                        '>' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::GreaterThanOrEqual(position)
+                                } else {
+                                    Token::GreaterThan(position)
+                                }
+                            }
+                            None => Token::GreaterThan(position),
+                        },
+                        '<' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '=' {
+                                    self.next_char();
+                                    Token::LessThanOrEqual(position)
+                                } else {
+                                    Token::LessThan(position)
+                                }
+                            }
+                            None => Token::LessThan(position),
+                        },
+                        '&' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '&' {
+                                    self.next_char();
+                                    Token::And(position)
+                                } else {
+                                    Token::Ampersand(position)
+                                }
+                            }
+                            None => Token::Ampersand(position),
+                        },
+                        '|' => match self.peek_char() {
+                            Some(&c) => {
+                                if c == '|' {
+                                    self.next_char();
+                                    Token::Or(position)
+                                } else {
+                                    Token::Unknown(position, current.to_string())
+                                }
+                            }
+                            None => Token::Unknown(position, current.to_string()),
+                        },
+                        _ => Token::Unknown(position, current.to_string()),
+                    }
                 }
             }
             None => Token::EOF(self.position.clone()),
@@ -66,7 +217,33 @@ impl<'a> Lexer<'a> {
             }
             self.next_char();
         }
-        Token::Whitespace
+        self.lex()
+    }
+
+    fn consume_comment(&mut self) -> Token {
+        while let Some(&c) = self.peek_char() {
+            if c == '\n' {
+                break;
+            }
+            self.next_char();
+        }
+        self.lex()
+    }
+
+    fn consume_multiline_comment(&mut self) -> Token {
+        while let Some(&c) = self.peek_char() {
+            if c == '*' {
+                self.next_char();
+                if let Some(&c) = self.peek_char() {
+                    if c == '/' {
+                        self.next_char();
+                        break;
+                    }
+                }
+            }
+            self.next_char();
+        }
+        self.lex()
     }
 
     fn collect<F>(&mut self, condition: F) -> String
@@ -90,8 +267,17 @@ impl<'a> Lexer<'a> {
         current.col -= buffer.len();
 
         match buffer.as_str() {
-            "true" => Token::Boolean(current, true),
-            "false" => Token::Boolean(current, false),
+            "if" => Token::Keyword(current, buffer),
+            "else" => Token::Keyword(current, buffer),
+            "for" => Token::Keyword(current, buffer),
+            "in" => Token::Keyword(current, buffer),
+            "while" => Token::Keyword(current, buffer),
+            "break" => Token::Keyword(current, buffer),
+            "continue" => Token::Keyword(current, buffer),
+            "number" => Token::Type(current, buffer),
+            "string" => Token::Type(current, buffer),
+            "true" => Token::Boolean(current, buffer),
+            "false" => Token::Boolean(current, buffer),
             _ => Token::Identifier(current, buffer),
         }
     }
@@ -100,7 +286,7 @@ impl<'a> Lexer<'a> {
         let buffer = self.collect(|c| c.is_numeric());
         let mut current = self.position.clone();
         current.col -= buffer.len();
-        Token::Integer(current, buffer.parse::<i32>().unwrap())
+        Token::Number(current, buffer)
     }
 
     fn collect_string(&mut self) -> Token {

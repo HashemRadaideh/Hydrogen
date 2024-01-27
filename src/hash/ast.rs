@@ -1,17 +1,22 @@
-use super::tokens::{Position, Token};
+#![allow(unused)]
 
-#[derive(Debug)]
+use super::tokens::Token;
+
+#[derive(Debug, Clone)]
 pub enum Node {
     StringLiteral(String),
     BooleanLiteral(bool),
+    NumberLiteral(String),
+    Identifier(String),
+    Operator(String),
 
     // takes either an Integer or Float literals
-    NumberLiteral(Box<Node>),
-    IntegerLiteral(i32),
-    FloatLiteral(f32),
+    // NumberLiteral(Box<Node>),
+    // IntegerLiteral(i32),
+    // FloatLiteral(f32),
 
     //                [identifier, type,             expression]
-    VariableAssignment(Box<Node>, Option<Box<Node>>, Box<Node>),
+    // VariableAssignment(Box<Node>, Option<Box<Node>>, Box<Node>),
 
     //             [operator, expression]
     UnaryExpression(Box<Node>, Box<Node>),
@@ -20,16 +25,14 @@ pub enum Node {
     BinaryExpression(Box<Node>, Box<Node>, Box<Node>),
 
     //                 [identifier, type]
-    VariableDeclaration(Box<Node>, Box<Node>),
-
-    Variable(String),
-
-    Statement(Box<Node>),
+    VariableDefinition(Box<Node>, Box<Node>),
 
     //                [identifier, parameters,    body]
     FunctionDefinition(Box<Node>, Box<Node>, Box<Node>),
     //        [variable declarations]
     Parameters(Vec<Box<Node>>),
+    //
+    End,
     //   [statements]
     Block(Vec<Box<Node>>),
 
@@ -37,15 +40,13 @@ pub enum Node {
     FunctionCall(Box<Node>, Vec<Box<Node>>),
     //       [variables]
     Arguments(Vec<Box<Node>>),
-
-    Skip,
-    End,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Error {
     UnknownToken(Token),
     UnexpectedToken(Token),
+    Errors(Vec<Box<Error>>),
 }
 
 #[cfg(test)]

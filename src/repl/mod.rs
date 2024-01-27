@@ -9,7 +9,7 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 
-use crate::hash::{exec, validate};
+use crate::hash::{print_ast, validate};
 use crate::repl::cell::Cell;
 use crate::repl::linebuffer::LineBuffer;
 use crate::repl::mode::CursorMode;
@@ -157,7 +157,7 @@ pub fn repl(mode: String) -> Result<()> {
         match ast {
             Ok(tree) => {
                 stdout.execute(SetForegroundColor(Color::Red))?;
-                exec(tree);
+                print_ast(tree)?;
                 stdout.execute(ResetColor)?;
 
                 line.buffer.clear();

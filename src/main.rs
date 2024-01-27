@@ -5,7 +5,7 @@ use clap::Parser;
 mod hash;
 mod repl;
 
-use hash::{exec, validate};
+use hash::{print_ast, print_error, validate};
 use repl::repl;
 
 #[derive(Parser, Debug)]
@@ -25,10 +25,8 @@ fn main() -> Result<()> {
     } else {
         let ast = validate(&fs::read_to_string(Path::new("test/hello.txt")).unwrap());
         match ast {
-            Ok(tree) => {
-                exec(tree);
-            }
-            Err(_) => {}
+            Ok(tree) => print_ast(tree)?,
+            Err(error) => print_error(error)?,
         }
     }
 
