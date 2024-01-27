@@ -72,20 +72,12 @@ pub fn repl(mode: String) -> Result<()> {
                             stdout.flush()?;
                         }
                         KeyCode::Enter => {
-                            let (ast, ok) = validate(&line.buffer);
-                            if ok {
-                                stdout.execute(SetForegroundColor(Color::Red))?;
-                                terminal::disable_raw_mode()?;
-                                println!();
-                                exec(ast.unwrap());
-                                terminal::enable_raw_mode()?;
-                                stdout.execute(ResetColor)?;
-
-                                line.buffer.clear();
-                                break 'input;
-                            } else {
-                                prompt(&mut stdout, "... ")?;
-                            }
+                            // let (_, ok) = validate(&line.buffer);
+                            // if ok {
+                            break 'input;
+                            // } else {
+                            //     prompt(&mut stdout, "... ")?;
+                            // }
                         }
                         KeyCode::Backspace => {}
                         KeyCode::Delete => {}
@@ -157,6 +149,21 @@ pub fn repl(mode: String) -> Result<()> {
                     }
                     _ => {}
                 },
+            }
+        }
+        terminal::disable_raw_mode()?;
+        println!();
+        let ast = validate(&line.buffer);
+        match ast {
+            Ok(tree) => {
+                stdout.execute(SetForegroundColor(Color::Red))?;
+                exec(tree);
+                stdout.execute(ResetColor)?;
+
+                line.buffer.clear();
+            }
+            Err(errors) => {
+                println!("{:?}", errors)
             }
         }
     }

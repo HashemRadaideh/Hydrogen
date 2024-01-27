@@ -1,20 +1,35 @@
 #[derive(Debug, Clone)]
-pub enum TokenType {
-    String,
-    Integer,
-    Unknown,
-    Whitespace,
-    EOF,
+pub struct Position {
+    pub col: usize,
+    pub row: usize,
 }
 
 #[derive(Debug, Clone)]
-pub struct Token {
-    pub value: String,
-    pub token: TokenType,
-}
-
-impl Token {
-    pub fn new(value: String, token: TokenType) -> Self {
-        Self { value, token }
-    }
+pub enum Token {
+    LeftParenthesis(Position),
+    RightParenthesis(Position),
+    LeftBrace(Position),
+    RightBrace(Position),
+    LeftBracket(Position),
+    RightBracket(Position),
+    Assignment(Position),
+    Plus(Position),
+    Minus(Position),
+    Asterisk(Position),
+    Slash(Position),
+    Ampersand(Position),
+    DollarSign(Position),
+    Hash(Position),
+    ExplinationMark(Position),
+    QuestionMark(Position),
+    EscapeCode(Position, char),
+    Identifier(Position, String),
+    String(Position, String),
+    Boolean(Position, bool),
+    Integer(Position, i32),
+    Float(Position, f32),
+    Keyword(Position, String),
+    Unknown(Position, String),
+    Whitespace,
+    EOF(Position),
 }

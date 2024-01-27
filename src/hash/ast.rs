@@ -1,77 +1,51 @@
-use std::fmt;
+use super::tokens::{Position, Token};
 
 #[derive(Debug)]
-pub enum ASTNode {
-    Program(Vec<Box<ASTNode>>),
-    // VariableDeclaration(String, Box<ASTNode>),
-    // Assignment(String, Box<ASTNode>),
-    Identifier(String),
-    // Number(f64),
-    // StringLiteral(String),
-    // Boolean(bool),
+pub enum Node {
+    StringLiteral(String),
+    BooleanLiteral(bool),
+
+    // takes either an Integer or Float literals
+    NumberLiteral(Box<Node>),
+    IntegerLiteral(i32),
+    FloatLiteral(f32),
+
+    //                [identifier, type,             expression]
+    VariableAssignment(Box<Node>, Option<Box<Node>>, Box<Node>),
+
+    //             [operator, expression]
+    UnaryExpression(Box<Node>, Box<Node>),
+
+    //              [expression, operator, expression]
+    BinaryExpression(Box<Node>, Box<Node>, Box<Node>),
+
+    //                 [identifier, type]
+    VariableDeclaration(Box<Node>, Box<Node>),
+
+    Variable(String),
+
+    Statement(Box<Node>),
+
+    //                [identifier, parameters,    body]
+    FunctionDefinition(Box<Node>, Box<Node>, Box<Node>),
+    //        [variable declarations]
+    Parameters(Vec<Box<Node>>),
+    //   [statements]
+    Block(Vec<Box<Node>>),
+
+    //          [identifier, arguments]
+    FunctionCall(Box<Node>, Vec<Box<Node>>),
+    //       [variables]
+    Arguments(Vec<Box<Node>>),
+
+    Skip,
+    End,
 }
 
 #[derive(Debug)]
-pub struct ASTree {
-    pub root: Option<Box<ASTNode>>,
-}
-
-impl ASTree {
-    pub fn new() -> Self {
-        Self { root: None }
-    }
-}
-
-impl fmt::Display for ASTNode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.format(0))
-    }
-}
-
-impl ASTNode {
-    fn format(&self, level: usize) -> String {
-        let indent = "  ".repeat(level);
-
-        match self {
-            ASTNode::Program(statements) => {
-                let mut result = String::new();
-                for statement in statements {
-                    result.push_str(&statement.format(level + 1));
-                }
-                result
-            }
-            // ASTNode::VariableDeclaration(identifier, expression) => {
-            //     format!(
-            //         "{}[Variable Declaration] {} = {}\n",
-            //         indent,
-            //         identifier,
-            //         expression.format(level + 1)
-            //     )
-            // }
-            // ASTNode::Assignment(identifier, expression) => {
-            //     format!(
-            //         "{}[Assignment] {} = {}\n",
-            //         indent,
-            //         identifier,
-            //         expression.format(level + 1)
-            //     )
-            // }
-            ASTNode::Identifier(identifier) => format!("{}[Identifier] {}\n", indent, identifier),
-            // ASTNode::Number(number) => format!("{}[Number] {}\n", indent, number),
-            // ASTNode::StringLiteral(s) => format!("{}[String Literal] \"{}\"\n", indent, s),
-            // ASTNode::Boolean(b) => format!("{}[Boolean] {}\n", indent, b),
-        }
-    }
-}
-
-impl fmt::Display for ASTree {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(root) = &self.root {
-            write!(f, "{}", root.format(0))
-        } else {
-            write!(f, "Empty AST\n")
-        }
-    }
+pub enum Error {
+    UnknownToken(Token),
+    UnexpectedToken(Token),
 }
 
 #[cfg(test)]

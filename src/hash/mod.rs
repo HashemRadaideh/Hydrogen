@@ -1,21 +1,16 @@
-use self::{ast::ASTree, parser::Parser};
+use self::{ast::Error, ast::Node, parser::Parser};
 
 pub mod ast;
 pub mod lexer;
 pub mod parser;
 pub mod tokens;
 
-pub fn validate(content: &String) -> (Option<ASTree>, bool) {
+pub fn validate(content: &String) -> Result<Vec<Box<Node>>, Vec<Box<Error>>> {
     let mut parser = Parser::new(&content);
 
-    let ast = parser.parse();
-
-    match ast {
-        Ok(tree) => (Some(tree), true),
-        Err(_) => (None, false),
-    }
+    parser.parse()
 }
 
-pub fn exec(ast: ASTree) {
+pub fn exec(ast: Vec<Box<ast::Node>>) {
     println!("{:?}", ast);
 }
