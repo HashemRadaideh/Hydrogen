@@ -1,0 +1,13 @@
+main(): {
+  variable1 = 1234
+  var2 = 1.234
+  var3 = 1_234
+  var4 = 1_234.567_89
+  var5 = 1_234.567_89E-12
+  var6 = true
+  var7 = false
+  var8 = "Hello, World!"
+  var9 = 'h'
+
+  print(var8)
+}
