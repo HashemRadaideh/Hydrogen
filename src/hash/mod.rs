@@ -1,28 +1,51 @@
 use std::io;
 
-use crate::hash::ast::Node;
+use crate::hash::ast::{ASTNode, Node};
 
-use self::{ast::ASTError, ast::ASTNode, parser::Parser};
+use self::{
+    ast::{Errors, Tree},
+    parser::Parser,
+};
 
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     ExecutableCommand,
 };
 
+/// Module containing abstract syntax tree (AST) definitions.
 pub mod ast;
+/// Module containing lexer implementation.
 pub mod lexer;
+/// Module containing parser implementation.
 pub mod parser;
+/// Module containing token definitions.
 pub mod tokens;
 
-type Tree = Vec<Box<ASTNode>>;
-
-pub fn validate(content: &String) -> Result<Tree, Vec<Box<ASTError>>> {
+/// Validates the input content and returns the AST or errors.
+///
+/// # Arguments
+///
+/// * `content` - The content to be parsed and validated.
+///
+/// # Returns
+///
+/// * `Result<Tree, Errors>` - Ok(Tree) if parsing is successful, Err(Errors) if there are errors.
+pub fn validate(content: &String) -> Result<Tree, Errors> {
     let mut parser = Parser::new(&content);
 
     parser.parse()
 }
 
-pub fn print_ast(ast: Vec<Box<ast::ASTNode>>) -> io::Result<()> {
+/// Prints the abstract syntax tree (AST) to the standard output with color-coding.
+///
+/// # Arguments
+///
+/// * `ast` - The abstract syntax tree to be printed.
+///
+/// # Returns
+///
+/// * `io::Result<()>` - Ok(()) if printing is successful, Err(io::Error) otherwise.
+pub fn print_ast(ast: Tree) -> io::Result<()> {
     io::stdout().execute(SetForegroundColor(Color::Green))?;
     println!("{:?}", ast);
     io::stdout().execute(SetForegroundColor(Color::Blue))?;
@@ -31,13 +54,27 @@ pub fn print_ast(ast: Vec<Box<ast::ASTNode>>) -> io::Result<()> {
     Ok(())
 }
 
-pub fn print_error(ast: Vec<Box<ast::ASTError>>) -> io::Result<()> {
+/// Prints errors in the abstract syntax tree (AST) to the standard output with color-coding.
+///
+/// # Arguments
+///
+/// * `ast` - The abstract syntax tree containing errors to be printed.
+///
+/// # Returns
+///
+/// * `io::Result<()>` - Ok(()) if printing is successful, Err(io::Error) otherwise.
+pub fn print_error(ast: Errors) -> io::Result<()> {
     io::stdout().execute(SetForegroundColor(Color::Red))?;
     println!("{:?}", ast);
     io::stdout().execute(ResetColor)?;
     Ok(())
 }
 
+/// Prints the nodes of the abstract syntax tree (AST) in a tree-like structure.
+///
+/// # Arguments
+///
+/// * `tree` - The abstract syntax tree to be printed.
 pub fn print_tree(tree: &Tree) {
     let mut indent = Vec::new();
     for (i, node) in tree.iter().enumerate() {
@@ -187,12 +224,14 @@ pub fn print_tree(tree: &Tree) {
             }
             ASTNode::VariableDefinition(name, t, expr) => {
                 println!("[Variable Definition]");
+
                 print_node(name, indent, false);
                 print_node(t, indent, false);
                 print_node(expr, indent, true);
             }
             ASTNode::FunctionDefinition(id, params, ret, body) => {
                 println!("[Function Definition]");
+
                 print_node(id, indent, false);
                 print_node(params, indent, false);
                 print_node(ret, indent, false);
@@ -200,6 +239,7 @@ pub fn print_tree(tree: &Tree) {
             }
             ASTNode::Parameters(children) => {
                 println!("[Parameters]");
+
                 let len = children.len();
                 for (i, child) in children.iter().enumerate() {
                     let next_last = last && i == len - 1;
@@ -211,6 +251,7 @@ pub fn print_tree(tree: &Tree) {
             }
             ASTNode::Block(children) => {
                 println!("[Block]");
+
                 let len = children.len();
                 for (i, child) in children.iter().enumerate() {
                     let next_last = last && i == len - 1;
@@ -222,11 +263,13 @@ pub fn print_tree(tree: &Tree) {
             }
             ASTNode::FunctionCall(name, arguments) => {
                 println!("[Function Call]");
+
                 print_node(name, indent, false);
                 print_node(arguments, indent, true);
             }
             ASTNode::Arguments(children) => {
                 println!("[Arguments]");
+
                 let len = children.len();
                 for (i, child) in children.iter().enumerate() {
                     let next_last = last && i == len - 1;
@@ -236,7 +279,22 @@ pub fn print_tree(tree: &Tree) {
                     indent.pop();
                 }
             }
-            ASTNode::End => todo!(),
+            ASTNode::Delimiter => todo!(),
         }
     }
+
+    // fn print_message(message: &str, indent: &mut Vec<&str>, last: bool) {
+    //     if !indent.is_empty() {
+    //         for i in 0..indent.len() {
+    //             print!("{}", indent[i]);
+    //         }
+
+    //         if last {
+    //             print!("└───");
+    //         } else {
+    //             print!("├───");
+    //         }
+    //     }
+    //     println!("[{}]", message);
+    // }
 }

@@ -14,10 +14,23 @@ use crate::repl::cell::Cell;
 use crate::repl::linebuffer::LineBuffer;
 use crate::repl::mode::CursorMode;
 
+/// Module containing REPL-related functionality.
 mod cell;
+/// Module containing line buffer implementation.
 mod linebuffer;
+/// Module containing cursor modes for the REPL.
 mod mode;
 
+/// Prints a message to the standard output with proper formatting.
+///
+/// # Arguments
+///
+/// * `stdout` - The standard output.
+/// * `msg` - The message to be printed.
+///
+/// # Returns
+///
+/// * `Result<()>` - Ok(()) if printing is successful, Err(io::Error) otherwise.
 fn print_message(stdout: &mut Stdout, msg: &str) -> Result<()> {
     stdout
         .queue(Print("\n"))?
@@ -29,6 +42,16 @@ fn print_message(stdout: &mut Stdout, msg: &str) -> Result<()> {
     Ok(())
 }
 
+/// Displays the REPL prompt with the provided message.
+///
+/// # Arguments
+///
+/// * `stdout` - The standard output.
+/// * `prompt` - The prompt message to be displayed.
+///
+/// # Returns
+///
+/// * `Result<()>` - Ok(()) if displaying the prompt is successful, Err(io::Error) otherwise.
 fn prompt(stdout: &mut Stdout, prompt: &str) -> Result<()> {
     stdout
         .execute(SetForegroundColor(Color::Blue))?
@@ -38,6 +61,15 @@ fn prompt(stdout: &mut Stdout, prompt: &str) -> Result<()> {
     Ok(())
 }
 
+/// Runs the Read-Eval-Print Loop (REPL) for interactive input.
+///
+/// # Arguments
+///
+/// * `mode` - The initial cursor mode for the REPL ("normal", "vi", or "emacs").
+///
+/// # Returns
+///
+/// * `Result<()>` - Ok(()) if the REPL runs successfully, Err(io::Error) otherwise.
 pub fn repl(mode: String) -> Result<()> {
     let edit_mode = CursorMode::new(mode);
     let mut line = LineBuffer::new();

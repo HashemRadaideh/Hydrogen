@@ -2,6 +2,22 @@ use std::fmt;
 
 use super::tokens::Token;
 
+/// Alias for Nodes type
+pub type Tree = Nodes;
+
+/// Alias for Boxed ASTNode
+pub type Node = Box<ASTNode>;
+
+/// Vector of AST nodes
+pub type Nodes = Vec<Node>;
+
+/// Alias for boxed ASTError
+pub type Error = Box<ASTError>;
+
+/// Vector of AST errors
+pub type Errors = Vec<Error>;
+
+/// Enum representing different types of AST nodes
 #[derive(Debug, Clone)]
 pub enum ASTNode {
     StringType,
@@ -13,42 +29,43 @@ pub enum ASTNode {
     Identifier(String),
     Operator(String),
 
-    // takes either an Integer or Float literals
+    // Placeholder for potential future node types
     // NumberLiteral(Box<Node>),
     // IntegerLiteral(i32),
     // FloatLiteral(f32),
-
-    //                 [identifier, type, expresion]
+    /// Variable definition: (identifier, type, expression)
     VariableDefinition(Node, Node, Node),
 
-    //  [type]
+    /// Type: (type)
     Type(Option<Node>),
 
-    //             [operator, expression]
+    /// Unary expression: (operator, expression)
     UnaryExpression(Node, Node),
 
-    //              [expression, operator, expression]
+    /// Binary expression: (expression, operator, expression)
     BinaryExpression(Node, Node, Node),
 
-    //                [identifier, parameters, return, body]
+    /// Function definition: (identifier, parameters, return, body)
     FunctionDefinition(Node, Node, Node, Node),
-    //        [variable declarations]
-    Parameters(Vec<Node>),
-    //  [type]
+
+    /// Parameters: (variable declarations)
+    Parameters(Nodes),
+
+    /// Return: (type)
     Return(Option<Node>),
-    //   [statements]
-    Block(Vec<Node>),
 
-    //          [identifier, arguments]
+    /// Block: (statements)
+    Block(Nodes),
+
+    /// Function call: (identifier, arguments)
     FunctionCall(Node, Node),
-    //       [variables]
-    Arguments(Vec<Node>),
 
-    //
-    End,
+    /// Arguments: (variables)
+    Arguments(Nodes),
+
+    /// Delimiter end the parsing of the current statement
+    Delimiter,
 }
-
-pub type Node = Box<ASTNode>;
 
 impl fmt::Display for ASTNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -91,19 +108,18 @@ impl fmt::Display for ASTNode {
             ASTNode::StringType => write!(f, "str"),
             ASTNode::BooleanType => write!(f, "bool"),
             ASTNode::NumberType => write!(f, "num"),
-            ASTNode::End => todo!(),
+            ASTNode::Delimiter => todo!(),
         }
     }
 }
 
+/// Enum representing different types of AST errors
 #[derive(Debug, Clone)]
 pub enum ASTError {
     UnknownToken(Token),
     UnexpectedToken(Token),
-    Errors(Vec<Error>),
+    Errors(Errors),
 }
-
-pub type Error = Box<ASTError>;
 
 impl fmt::Display for ASTError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

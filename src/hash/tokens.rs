@@ -1,11 +1,13 @@
 use std::fmt;
 
+/// Struct representing the position of a token in the source code
 #[derive(Debug, Clone)]
 pub struct Position {
     pub col: usize,
     pub row: usize,
 }
 
+/// Enum representing different types of tokens
 #[derive(Debug, Clone)]
 pub enum Token {
     LeftParenthesis(Position),

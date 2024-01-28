@@ -1,38 +1,89 @@
 use super::{
-    ast::{ASTError, ASTNode, Error, Node},
+    ast::{ASTError, ASTNode, Error, Errors, Node, Nodes},
     lexer::Lexer,
     tokens::Token,
 };
 
+/// Parser Generates an abstract syntax tree from a program source code
+///
+/// # Eamples
+/// ```
+/// let mut parser = Parser::new("1 + 2");
+/// let ast = parser.parse();
+///
+/// assert!(ast.is_ok());
+/// ```
+///
+/// # Hydrogen example
+/// ```hy
+/// hi() {
+///   print()
+/// }
+///
+/// main() {
+///   hello(): num {
+///       var1 = 1234
+///       var2 = 1234
+///   }
+///
+///   hello()
+///
+///   var1: num = 1234
+///   var2 = var1 + 1234
+///
+///   var3: num = lambda() {
+///       var: str = "Hello, World!"
+///   }
+///
+///   var4: bool = true
+/// }
+/// ```
+///
+/// # TODO:
+/// - [x] implement parsing for statements
+/// - [x] implement parsing for functions
+/// - [x] implement parsing for blocks
+/// - [x] implement parsing for variables
+/// - [x] implement parsing for expressions
+/// - [ ] implement parsing for parameneters
+/// - [ ] implement parsing for arguments
+/// - [ ] implement parsing for keywords
+/// - [ ] fix the parsing of functions to include =
+/// - [ ] change the parsing of function body to
+///       parce_node instead of parse_block
+/// - [ ] change variable declaration's expression to be optional
+/// - [ ] fix the parser's error propagation
+/// - [ ] clean the api of the parser
+/// - [ ] add user defined types
 #[derive(Debug, Clone)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
 }
 
-type Nodes = Vec<Node>;
-type Errors = Vec<Error>;
-
 impl<'a> Parser<'a> {
+    /// Creates a new Parser instance with the given program source code.
     pub fn new(program: &'a str) -> Self {
         Self {
             lexer: Lexer::new(&program),
         }
     }
 
+    /// Advances the lexer and returns the next token.
     fn next(&mut self) -> Token {
         self.lexer.lex()
     }
 
+    /// Peeks at the next token without advancing the lexer.
     fn peek(&mut self) -> Token {
         self.lexer.peek()
     }
 
+    /// Parses the entire program and returns the abstract syntax tree.
     pub fn parse(&mut self) -> Result<Nodes, Errors> {
         let mut program = Vec::new();
         let mut errors = Vec::new();
 
         loop {
-            // println!("{:?}", self.peek());
             match self.peek() {
                 Token::Unknown(_, _) => {
                     let token = self.next();
@@ -61,10 +112,17 @@ impl<'a> Parser<'a> {
         let token = self.next();
         match token.clone() {
             Token::RightParenthesis(_) | Token::RightBrace(_) | Token::RightBracket(_) => {
-                Ok(Box::new(ASTNode::End))
+                Ok(Box::new(ASTNode::Delimiter))
             }
             Token::String(_, string) => Ok(Box::new(ASTNode::StringLiteral(string))),
             Token::Number(_, number) => Ok(Box::new(ASTNode::NumberLiteral(number))),
+            Token::Boolean(_, boolean) => {
+                Ok(Box::new(ASTNode::BooleanLiteral(if boolean == "true" {
+                    true
+                } else {
+                    false
+                })))
+            }
             Token::Type(_, t) => {
                 if t == "num" {
                     Ok(Box::new(ASTNode::NumberType))
@@ -95,7 +153,7 @@ impl<'a> Parser<'a> {
                             Ok(Box::new(ASTNode::FunctionDefinition(
                                 Box::new(ASTNode::Identifier(id)),
                                 value[0].clone(),
-                                value[1].clone(), // TODO: Fix this line
+                                value[1].clone(),
                                 value[2].clone(),
                             )))
                         }
@@ -114,7 +172,7 @@ impl<'a> Parser<'a> {
                         Err(Box::new(ASTError::UnexpectedToken(token.clone())))
                     }
                 }
-                _ => Err(Box::new(ASTError::UnexpectedToken(token))),
+                _ => Ok(Box::new(ASTNode::Identifier(id))),
             },
             _ => Err(Box::new(ASTError::UnexpectedToken(token))),
         }
@@ -163,7 +221,7 @@ impl<'a> Parser<'a> {
                 }
                 _ => match self.parse_node() {
                     Ok(parameter) => match *parameter {
-                        ASTNode::End => break,
+                        ASTNode::Delimiter => break,
                         _ => parameters.push(parameter),
                     },
                     Err(error) => {
@@ -196,7 +254,7 @@ impl<'a> Parser<'a> {
                 }
                 _ => match self.parse_node() {
                     Ok(statement) => match *statement {
-                        ASTNode::End => {
+                        ASTNode::Delimiter => {
                             self.next();
                             break;
                         }
@@ -216,7 +274,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_variable_definition(&mut self) -> Result<Vec<Node>, Error> {
+    fn parse_variable_definition(&mut self) -> Result<Nodes, Error> {
         let token = self.next();
         match token {
             Token::Equal(_) => {
@@ -277,7 +335,7 @@ impl<'a> Parser<'a> {
                 expression,
             )))
         } else {
-            self.parse_literal_or_identifier()
+            self.parse_node()
         }
     }
 
@@ -296,24 +354,44 @@ impl<'a> Parser<'a> {
             _ => None,
         }
     }
-
-    fn parse_literal_or_identifier(&mut self) -> Result<Node, Error> {
-        let token = self.next();
-        match token.clone() {
-            Token::Boolean(_, boolean) => {
-                Ok(Box::new(ASTNode::BooleanLiteral(if boolean == "true" {
-                    true
-                } else {
-                    false
-                })))
-            }
-            Token::String(_, string) => Ok(Box::new(ASTNode::StringLiteral(string))),
-            Token::Number(_, number) => Ok(Box::new(ASTNode::NumberLiteral(number))),
-            Token::Identifier(_, id) => Ok(Box::new(ASTNode::Identifier(id))),
-            _ => Err(Box::new(ASTError::UnexpectedToken(token))),
-        }
-    }
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parser() {
+        let program = r#"
+            hi() {
+                print()
+            }
+
+            main() {
+                hello(): num {
+                    var1 = 1234
+                    var2 = 1234
+                }
+
+                hello()
+
+                var1: num = 1234
+                var2 = var1 + 1234
+
+                var3: num = lambda() {
+                    var: str = "Hello, World!"
+                }
+
+                var4: bool = true
+            }
+        "#;
+
+        let mut parser = Parser::new(program);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+
+        // TODO: Add more specific assertions based on your expected AST structure
+        // For example, you can assert the structure of the AST, the types of nodes, etc.
+    }
+}

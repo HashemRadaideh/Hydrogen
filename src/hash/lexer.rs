@@ -2,13 +2,33 @@ use std::{char, iter::Peekable, str::Chars};
 
 use super::tokens::{Position, Token};
 
+/// Lexer struct responsible for tokenizing the source code.
+/// # TODO:
+/// - [x] tokenize identifiers
+/// - [x] tokenize numbers
+/// - [x] tokenize strings
+/// - [x] tokenize operators
+/// - [ ] fix the number tokinizing to parse multiple formats of numbers
+/// - [ ] fix the string tokinizing to parse escaped characters
+///
+/// # Example of number formats
+/// ```
+/// 1234        // integer
+/// 3.14159     // float
+/// 3E2         // scientific notation
+/// 314E-2      // scientific notation
+/// 3.14E2      // scientific notation with a floating point
+/// 3_141_592   // with separators
+/// 3_14_15_92  // other supported format
+/// ```
 #[derive(Debug, Clone)]
 pub struct Lexer<'a> {
-    source: Peekable<Chars<'a>>,
-    position: Position,
+    source: Peekable<Chars<'a>>, // Peekable iterator over characters in the source code
+    position: Position,          // Current position in the source code
 }
 
 impl<'a> Lexer<'a> {
+    /// Creates a new Lexer instance from the given source code.
     pub fn new(source: &'a str) -> Self {
         Self {
             source: source.chars().peekable(),
@@ -16,6 +36,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Retrieves the next character from the source code and updates the position.
     fn next_char(&mut self) -> (Position, char) {
         let current = self.source.next().unwrap_or_default();
         let position = self.position.clone();
@@ -27,10 +48,12 @@ impl<'a> Lexer<'a> {
         (position, current)
     }
 
+    /// Peeks at the next character in the source code without consuming it.
     fn peek_char(&mut self) -> Option<&char> {
         self.source.peek()
     }
 
+    /// Peeks at the next token without consuming it.
     pub fn peek(&mut self) -> Token {
         let mut peek_lexer = Lexer {
             source: self.source.clone(),
@@ -40,6 +63,7 @@ impl<'a> Lexer<'a> {
         peek_lexer.lex()
     }
 
+    /// Lexes and returns the next token from the source code.
     pub fn lex(&mut self) -> Token {
         match self.peek_char() {
             Some(&c) => {
@@ -210,6 +234,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Consumes whitespace characters until a non-whitespace character is encountered.
     fn consume_whitespace(&mut self) -> Token {
         while let Some(&c) = self.peek_char() {
             if !c.is_whitespace() {
@@ -220,6 +245,7 @@ impl<'a> Lexer<'a> {
         self.lex()
     }
 
+    /// Consumes characters until a newline character is encountered, indicating the end of a line comment.
     fn consume_comment(&mut self) -> Token {
         while let Some(&c) = self.peek_char() {
             if c == '\n' {
@@ -230,6 +256,7 @@ impl<'a> Lexer<'a> {
         self.lex()
     }
 
+    /// Consumes characters until the closing delimiter of a multiline comment is encountered.
     fn consume_multiline_comment(&mut self) -> Token {
         while let Some(&c) = self.peek_char() {
             if c == '*' {
@@ -246,6 +273,7 @@ impl<'a> Lexer<'a> {
         self.lex()
     }
 
+    /// Collects characters that satisfy the provided condition until a character that does not satisfy the condition is encountered.
     fn collect<F>(&mut self, condition: F) -> String
     where
         F: Fn(char) -> bool,
@@ -261,6 +289,7 @@ impl<'a> Lexer<'a> {
         buffer
     }
 
+    /// Collects characters to form an identifier or a keyword.
     fn collect_id(&mut self) -> Token {
         let buffer = self.collect(|c| c.is_alphanumeric());
         let mut current = self.position.clone();
@@ -283,6 +312,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Collects characters to form a numeric literal.
     fn collect_number(&mut self) -> Token {
         let buffer = self.collect(|c| c.is_numeric());
         let mut current = self.position.clone();
@@ -290,6 +320,7 @@ impl<'a> Lexer<'a> {
         Token::Number(current, buffer)
     }
 
+    /// Collects characters to form a string literal.
     fn collect_string(&mut self) -> Token {
         let (current, _) = self.next_char();
 
@@ -313,4 +344,47 @@ impl<'a> Lexer<'a> {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_lexer() {
+        let program = r#"
+            hi() {
+                print()
+            }
+
+            main() {
+                hello(): num {
+                    var1 = 1234
+                    var2 = 1234
+                }
+
+                hello()
+
+                var1: num = 1234
+                var2 = var1 + 1234
+
+                var3: num = lambda() {
+                    var: str = "Hello, World!"
+                }
+
+                var4: bool = true
+            }
+        "#;
+
+        let mut lexer = Lexer::new(program);
+        let mut tokens = Vec::new();
+
+        loop {
+            let token = lexer.lex();
+            if let Token::EOF(_) = token {
+                break;
+            }
+            tokens.push(token);
+        }
+
+        // TODO: Add more specific assertions based on the expected tokens
+        // For example, you can assert the types and positions of tokens.
+    }
+}
