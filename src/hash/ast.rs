@@ -1,9 +1,10 @@
 #![allow(unused)]
+use std::fmt;
 
 use super::tokens::Token;
 
 #[derive(Debug, Clone)]
-pub enum Node {
+pub enum ASTNode {
     StringLiteral(String),
     BooleanLiteral(bool),
     NumberLiteral(String),
@@ -19,35 +20,75 @@ pub enum Node {
     // VariableAssignment(Box<Node>, Option<Box<Node>>, Box<Node>),
 
     //             [operator, expression]
-    UnaryExpression(Box<Node>, Box<Node>),
+    UnaryExpression(Node, Node),
 
     //              [expression, operator, expression]
-    BinaryExpression(Box<Node>, Box<Node>, Box<Node>),
+    BinaryExpression(Node, Node, Node),
 
     //                 [identifier, type]
-    VariableDefinition(Box<Node>, Box<Node>),
+    VariableDefinition(Node, Node),
 
     //                [identifier, parameters,    body]
-    FunctionDefinition(Box<Node>, Box<Node>, Box<Node>),
+    FunctionDefinition(Node, Node, Node),
     //        [variable declarations]
-    Parameters(Vec<Box<Node>>),
+    Parameters(Vec<Node>),
     //
     End,
     //   [statements]
-    Block(Vec<Box<Node>>),
+    Block(Vec<Node>),
 
     //          [identifier, arguments]
-    FunctionCall(Box<Node>, Vec<Box<Node>>),
+    FunctionCall(Node, Vec<Node>),
     //       [variables]
-    Arguments(Vec<Box<Node>>),
+    Arguments(Vec<Node>),
+}
+
+pub type Node = Box<ASTNode>;
+
+impl fmt::Display for ASTNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ASTNode::StringLiteral(value) => write!(f, "\"{}\"", value),
+            ASTNode::BooleanLiteral(value) => write!(f, "{}", value),
+            ASTNode::NumberLiteral(value) => write!(f, "{}", value),
+            ASTNode::Identifier(name) => write!(f, "{}", name),
+            ASTNode::Operator(op) => write!(f, "{}", op),
+            ASTNode::UnaryExpression(op, expr) => write!(f, "({} {})", op, expr),
+            ASTNode::BinaryExpression(left, op, right) => write!(f, "({} {} {})", left, op, right),
+            ASTNode::VariableDefinition(name, typ) => write!(f, "let {} = {}", name, typ),
+            ASTNode::FunctionDefinition(name, params, body) => {
+                write!(f, "fn {}({}) {}", name, params, body)
+            }
+            ASTNode::Parameters(params) => {
+                let params_str: Vec<String> = params.iter().map(|p| p.to_string()).collect();
+                write!(f, "({})", params_str.join(", "))
+            }
+            ASTNode::End => write!(f, "End"),
+            ASTNode::Block(statements) => {
+                let statements_str: Vec<String> =
+                    statements.iter().map(|s| s.to_string()).collect();
+                write!(f, "{{\n{}\n}}", statements_str.join("\n"))
+            }
+            ASTNode::FunctionCall(name, args) => {
+                let args_str: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+                write!(f, "{}({})", name, args_str.join(", "))
+            }
+            ASTNode::Arguments(args) => {
+                let args_str: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+                write!(f, "({})", args_str.join(", "))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
-pub enum Error {
+pub enum ASTError {
     UnknownToken(Token),
     UnexpectedToken(Token),
-    Errors(Vec<Box<Error>>),
+    Errors(Vec<Error>),
 }
+
+pub type Error = Box<ASTError>;
 
 #[cfg(test)]
 mod tests {}

@@ -1,6 +1,8 @@
 use std::io;
 
-use self::{ast::Error, ast::Node, parser::Parser};
+use crate::hash::ast::Node;
+
+use self::{ast::ASTError, ast::ASTNode, parser::Parser};
 
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
@@ -12,22 +14,121 @@ pub mod lexer;
 pub mod parser;
 pub mod tokens;
 
-pub fn validate(content: &String) -> Result<Vec<Box<Node>>, Vec<Box<Error>>> {
+type Tree = Vec<Box<ASTNode>>;
+
+pub fn validate(content: &String) -> Result<Tree, Vec<Box<ASTError>>> {
     let mut parser = Parser::new(&content);
 
     parser.parse()
 }
 
-pub fn print_ast(ast: Vec<Box<ast::Node>>) -> io::Result<()> {
-    io::stdout().execute(SetForegroundColor(Color::Green))?;
+pub fn print_ast(ast: Vec<Box<ast::ASTNode>>) -> io::Result<()> {
+    // io::stdout().execute(SetForegroundColor(Color::Green))?;
+    // println!("{:?}", ast);
+    io::stdout().execute(SetForegroundColor(Color::Blue))?;
+    print_tree(&ast);
+    io::stdout().execute(ResetColor)?;
+    Ok(())
+}
+
+pub fn print_error(ast: Vec<Box<ast::ASTError>>) -> io::Result<()> {
+    io::stdout().execute(SetForegroundColor(Color::Red))?;
     println!("{:?}", ast);
     io::stdout().execute(ResetColor)?;
     Ok(())
 }
 
-pub fn print_error(ast: Vec<Box<ast::Error>>) -> io::Result<()> {
-    io::stdout().execute(SetForegroundColor(Color::Red))?;
-    println!("{:?}", ast);
-    io::stdout().execute(ResetColor)?;
-    Ok(())
+pub fn print_tree(tree: &Tree) {
+    let mut indent = Vec::new();
+    for (i, node) in tree.iter().enumerate() {
+        let last = i == tree.len() - 1;
+        print_node(node, &mut indent, last);
+    }
+
+    fn print_node(node: &Node, indent: &mut Vec<&str>, last: bool) {
+        match &**node {
+            ASTNode::BooleanLiteral(value) => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("{}", value);
+            }
+            ASTNode::StringLiteral(value)
+            | ASTNode::NumberLiteral(value)
+            | ASTNode::Identifier(value)
+            | ASTNode::Operator(value) => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("{}", value);
+            }
+            ASTNode::UnaryExpression(op, expr) => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("{}{}", op, expr);
+            }
+            ASTNode::BinaryExpression(left, op, right) => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("{} {} {}", left, op, right);
+            }
+            ASTNode::VariableDefinition(name, expr) => {
+                print_node(name, indent, false);
+                print_node(expr, indent, true);
+            }
+            ASTNode::FunctionDefinition(id, params, body) => {
+                print_node(id, indent, true);
+                print_node(params, indent, false);
+                print_node(body, indent, true);
+            }
+            ASTNode::Parameters(children)
+            | ASTNode::Block(children)
+            | ASTNode::FunctionCall(_, children)
+            | ASTNode::Arguments(children) => {
+                let len = children.len();
+                for (i, child) in children.iter().enumerate() {
+                    let next_last = last && i == len - 1;
+                    let indent_next = if next_last { "    " } else { "│   " };
+                    indent.push(indent_next);
+                    print_node(child, indent, next_last);
+                    indent.pop();
+                }
+            }
+            _ => {}
+        }
+    }
 }
