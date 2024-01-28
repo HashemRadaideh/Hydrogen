@@ -4,8 +4,11 @@ use super::tokens::Token;
 
 #[derive(Debug, Clone)]
 pub enum ASTNode {
+    StringType,
     StringLiteral(String),
+    BooleanType,
     BooleanLiteral(bool),
+    NumberType,
     NumberLiteral(String),
     Identifier(String),
     Operator(String),
@@ -15,8 +18,11 @@ pub enum ASTNode {
     // IntegerLiteral(i32),
     // FloatLiteral(f32),
 
-    //                [identifier, type,             expression]
-    // VariableAssignment(Box<Node>, Option<Box<Node>>, Box<Node>),
+    //                 [identifier, type, expresion]
+    VariableDefinition(Node, Node, Node),
+
+    //  [type]
+    Type(Option<Node>),
 
     //             [operator, expression]
     UnaryExpression(Node, Node),
@@ -24,15 +30,12 @@ pub enum ASTNode {
     //              [expression, operator, expression]
     BinaryExpression(Node, Node, Node),
 
-    //                 [identifier, type]
-    VariableDefinition(Node, Node),
-
-    //                [identifier, parameters,    body]
-    FunctionDefinition(Node, Node, Node),
+    //                [identifier, parameters, return, body]
+    FunctionDefinition(Node, Node, Node, Node),
     //        [variable declarations]
     Parameters(Vec<Node>),
-    //
-    End,
+    //  [type]
+    Return(Option<Node>),
     //   [statements]
     Block(Vec<Node>),
 
@@ -40,6 +43,9 @@ pub enum ASTNode {
     FunctionCall(Node, Node),
     //       [variables]
     Arguments(Vec<Node>),
+
+    //
+    End,
 }
 
 pub type Node = Box<ASTNode>;
@@ -54,15 +60,14 @@ impl fmt::Display for ASTNode {
             ASTNode::Operator(op) => write!(f, "{}", op),
             ASTNode::UnaryExpression(op, expr) => write!(f, "({} {})", op, expr),
             ASTNode::BinaryExpression(left, op, right) => write!(f, "({} {} {})", left, op, right),
-            ASTNode::VariableDefinition(name, typ) => write!(f, "let {} = {}", name, typ),
-            ASTNode::FunctionDefinition(name, params, body) => {
-                write!(f, "fn {}({}) {}", name, params, body)
+            ASTNode::VariableDefinition(name, t, expr) => write!(f, "{}: {} = {}", name, t, expr),
+            ASTNode::FunctionDefinition(name, params, ret, body) => {
+                write!(f, "{}({}): {} {}", name, params, ret, body)
             }
             ASTNode::Parameters(params) => {
                 let params_str: Vec<String> = params.iter().map(|p| p.to_string()).collect();
                 write!(f, "({})", params_str.join(", "))
             }
-            ASTNode::End => write!(f, "End"),
             ASTNode::Block(statements) => {
                 let statements_str: Vec<String> =
                     statements.iter().map(|s| s.to_string()).collect();
@@ -75,6 +80,18 @@ impl fmt::Display for ASTNode {
                 let args_str: Vec<String> = args.iter().map(|a| a.to_string()).collect();
                 write!(f, "({})", args_str.join(", "))
             }
+            ASTNode::Type(t) => match t {
+                Some(t) => write!(f, "{}", t),
+                None => write!(f, "none"),
+            },
+            ASTNode::Return(ret) => match ret {
+                Some(ret) => write!(f, "{}", ret),
+                None => write!(f, "none"),
+            },
+            ASTNode::StringType => write!(f, "str"),
+            ASTNode::BooleanType => write!(f, "bool"),
+            ASTNode::NumberType => write!(f, "num"),
+            ASTNode::End => todo!(),
         }
     }
 }

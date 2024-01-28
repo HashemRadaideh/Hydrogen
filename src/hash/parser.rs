@@ -65,6 +65,17 @@ impl<'a> Parser<'a> {
             }
             Token::String(_, string) => Ok(Box::new(ASTNode::StringLiteral(string))),
             Token::Number(_, number) => Ok(Box::new(ASTNode::NumberLiteral(number))),
+            Token::Type(_, t) => {
+                if t == "num" {
+                    Ok(Box::new(ASTNode::NumberType))
+                } else if t == "str" {
+                    Ok(Box::new(ASTNode::StringType))
+                } else if t == "bool" {
+                    Ok(Box::new(ASTNode::BooleanType))
+                } else {
+                    Err(Box::new(ASTError::UnknownToken(token)))
+                }
+            }
             Token::Plus(_) | Token::Minus(_) => {
                 let expression = self.parse_expression()?;
                 Ok(Box::new(ASTNode::UnaryExpression(
@@ -84,18 +95,20 @@ impl<'a> Parser<'a> {
                             Ok(Box::new(ASTNode::FunctionDefinition(
                                 Box::new(ASTNode::Identifier(id)),
                                 value[0].clone(),
-                                value[1].clone(),
+                                value[1].clone(), // TODO: Fix this line
+                                value[2].clone(),
                             )))
                         }
                     } else {
                         Err(Box::new(ASTError::UnexpectedToken(token.clone())))
                     }
                 }
-                Token::Equal(_) => {
+                Token::Colon(_) | Token::Equal(_) => {
                     if let Ok(value) = self.parse_variable_definition() {
                         Ok(Box::new(ASTNode::VariableDefinition(
                             Box::new(ASTNode::Identifier(id)),
-                            value.clone(),
+                            value[0].clone(),
+                            value[1].clone(),
                         )))
                     } else {
                         Err(Box::new(ASTError::UnexpectedToken(token.clone())))
@@ -111,13 +124,30 @@ impl<'a> Parser<'a> {
         match self.parse_parameters() {
             Ok(param) => match self.peek() {
                 Token::LeftBrace(_) => match self.parse_block() {
-                    Ok(body) => Ok(vec![param, body]),
+                    Ok(body) => Ok(vec![param, Box::new(ASTNode::Return(None)), body]),
+                    Err(errors) => Err(errors),
+                },
+                Token::Colon(_) => match self.parse_return() {
+                    Ok(ret) => match self.peek() {
+                        Token::LeftBrace(_) => match self.parse_block() {
+                            Ok(body) => Ok(vec![param, Box::new(ASTNode::Return(Some(ret))), body]),
+                            Err(errors) => Err(errors),
+                        },
+                        _ => Err(Box::new(ASTError::UnexpectedToken(self.next()))),
+                    },
                     Err(errors) => Err(errors),
                 },
                 _ => Ok(vec![param]),
             },
             Err(error) => Err(error),
         }
+    }
+
+    fn parse_return(&mut self) -> Result<Node, Error> {
+        self.next();
+        let ret = self.parse_node()?;
+
+        Ok(ret)
     }
 
     fn parse_parameters(&mut self) -> Result<Node, Error> {
@@ -186,10 +216,27 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_variable_definition(&mut self) -> Result<Node, Error> {
-        self.next();
-        let expression = self.parse_expression()?;
-        Ok(expression)
+    fn parse_variable_definition(&mut self) -> Result<Vec<Node>, Error> {
+        let token = self.next();
+        match token {
+            Token::Equal(_) => {
+                let expression = self.parse_expression()?;
+                Ok(vec![Box::new(ASTNode::Type(None)), expression])
+            }
+            Token::Colon(_) => {
+                let t = self.parse_type()?;
+                self.next();
+                let expression = self.parse_expression()?;
+                Ok(vec![Box::new(ASTNode::Type(Some(t))), expression])
+            }
+            _ => Err(Box::new(ASTError::UnknownToken(token))),
+        }
+    }
+
+    fn parse_type(&mut self) -> Result<Node, Error> {
+        let t = self.parse_node()?;
+
+        Ok(t)
     }
 
     fn parse_expression(&mut self) -> Result<Node, Error> {

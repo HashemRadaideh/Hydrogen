@@ -23,8 +23,8 @@ pub fn validate(content: &String) -> Result<Tree, Vec<Box<ASTError>>> {
 }
 
 pub fn print_ast(ast: Vec<Box<ast::ASTNode>>) -> io::Result<()> {
-    // io::stdout().execute(SetForegroundColor(Color::Green))?;
-    // println!("{:?}", ast);
+    io::stdout().execute(SetForegroundColor(Color::Green))?;
+    println!("{:?}", ast);
     io::stdout().execute(SetForegroundColor(Color::Blue))?;
     print_tree(&ast);
     io::stdout().execute(ResetColor)?;
@@ -48,6 +48,48 @@ pub fn print_tree(tree: &Tree) {
 
     fn print_node(node: &Node, indent: &mut Vec<&str>, last: bool) {
         match &**node {
+            ASTNode::StringType => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("str");
+            }
+            ASTNode::BooleanType => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("bool");
+            }
+            ASTNode::NumberType => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("num");
+            }
             ASTNode::BooleanLiteral(value) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -79,6 +121,42 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("{}", value);
             }
+            ASTNode::Type(value) => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("[Type]");
+                match value {
+                    Some(value) => print_node(value, indent, false),
+                    None => {}
+                };
+            }
+            ASTNode::Return(value) => {
+                if !indent.is_empty() {
+                    for i in 0..indent.len() {
+                        print!("{}", indent[i]);
+                    }
+
+                    if last {
+                        print!("└───");
+                    } else {
+                        print!("├───");
+                    }
+                }
+                println!("[Return]");
+                match value {
+                    Some(value) => print_node(value, indent, false),
+                    None => {}
+                };
+            }
             ASTNode::UnaryExpression(op, expr) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -107,15 +185,17 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("{} {} {}", left, op, right);
             }
-            ASTNode::VariableDefinition(name, expr) => {
+            ASTNode::VariableDefinition(name, t, expr) => {
                 println!("[Variable Definition]");
                 print_node(name, indent, false);
+                print_node(t, indent, false);
                 print_node(expr, indent, true);
             }
-            ASTNode::FunctionDefinition(id, params, body) => {
+            ASTNode::FunctionDefinition(id, params, ret, body) => {
                 println!("[Function Definition]");
                 print_node(id, indent, false);
                 print_node(params, indent, false);
+                print_node(ret, indent, false);
                 print_node(body, indent, true);
             }
             ASTNode::Parameters(children) => {
@@ -156,7 +236,7 @@ pub fn print_tree(tree: &Tree) {
                     indent.pop();
                 }
             }
-            _ => {}
+            ASTNode::End => todo!(),
         }
     }
 }
