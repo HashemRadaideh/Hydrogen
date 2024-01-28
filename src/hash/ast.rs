@@ -1,4 +1,3 @@
-#![allow(unused)]
 use std::fmt;
 
 use super::tokens::Token;
@@ -38,7 +37,7 @@ pub enum ASTNode {
     Block(Vec<Node>),
 
     //          [identifier, arguments]
-    FunctionCall(Node, Vec<Node>),
+    FunctionCall(Node, Node),
     //       [variables]
     Arguments(Vec<Node>),
 }
@@ -70,8 +69,7 @@ impl fmt::Display for ASTNode {
                 write!(f, "{{\n{}\n}}", statements_str.join("\n"))
             }
             ASTNode::FunctionCall(name, args) => {
-                let args_str: Vec<String> = args.iter().map(|a| a.to_string()).collect();
-                write!(f, "{}({})", name, args_str.join(", "))
+                write!(f, "{}({})", name, args)
             }
             ASTNode::Arguments(args) => {
                 let args_str: Vec<String> = args.iter().map(|a| a.to_string()).collect();
@@ -89,6 +87,16 @@ pub enum ASTError {
 }
 
 pub type Error = Box<ASTError>;
+
+impl fmt::Display for ASTError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ASTError::UnknownToken(error) => write!(f, "ERROR: {}", error),
+            ASTError::UnexpectedToken(error) => write!(f, "ERROR: {}", error),
+            ASTError::Errors(errors) => write!(f, "ERROR: {:?}", errors),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {}

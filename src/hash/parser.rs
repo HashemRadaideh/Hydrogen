@@ -74,12 +74,19 @@ impl<'a> Parser<'a> {
             }
             Token::Identifier(_, id) => match self.peek() {
                 Token::LeftParenthesis(_) => {
-                    if let Ok(value) = self.parse_function_definition() {
-                        Ok(Box::new(ASTNode::FunctionDefinition(
-                            Box::new(ASTNode::Identifier(id)),
-                            value[0].clone(),
-                            value[1].clone(),
-                        )))
+                    if let Ok(value) = self.parse_function() {
+                        if value.len() == 1 {
+                            Ok(Box::new(ASTNode::FunctionCall(
+                                Box::new(ASTNode::Identifier(id)),
+                                value[0].clone(),
+                            )))
+                        } else {
+                            Ok(Box::new(ASTNode::FunctionDefinition(
+                                Box::new(ASTNode::Identifier(id)),
+                                value[0].clone(),
+                                value[1].clone(),
+                            )))
+                        }
                     } else {
                         Err(Box::new(ASTError::UnexpectedToken(token.clone())))
                     }
@@ -100,10 +107,17 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_function_definition(&mut self) -> Result<Nodes, Error> {
-        let param = self.parse_parameters()?;
-        let body = self.parse_block()?;
-        Ok(vec![param, body])
+    fn parse_function(&mut self) -> Result<Nodes, Error> {
+        match self.parse_parameters() {
+            Ok(param) => match self.peek() {
+                Token::LeftBrace(_) => match self.parse_block() {
+                    Ok(body) => Ok(vec![param, body]),
+                    Err(errors) => Err(errors),
+                },
+                _ => Ok(vec![param]),
+            },
+            Err(error) => Err(error),
+        }
     }
 
     fn parse_parameters(&mut self) -> Result<Node, Error> {
@@ -130,7 +144,10 @@ impl<'a> Parser<'a> {
         }
 
         if errors.is_empty() {
-            Ok(Box::new(ASTNode::Parameters(parameters)))
+            match self.peek() {
+                Token::LeftBrace(_) => Ok(Box::new(ASTNode::Parameters(parameters))),
+                _ => Ok(Box::new(ASTNode::Arguments(parameters))),
+            }
         } else {
             Err(Box::new(ASTError::Errors(errors)))
         }
@@ -236,6 +253,13 @@ impl<'a> Parser<'a> {
     fn parse_literal_or_identifier(&mut self) -> Result<Node, Error> {
         let token = self.next();
         match token.clone() {
+            Token::Boolean(_, boolean) => {
+                Ok(Box::new(ASTNode::BooleanLiteral(if boolean == "true" {
+                    true
+                } else {
+                    false
+                })))
+            }
             Token::String(_, string) => Ok(Box::new(ASTNode::StringLiteral(string))),
             Token::Number(_, number) => Ok(Box::new(ASTNode::NumberLiteral(number))),
             Token::Identifier(_, id) => Ok(Box::new(ASTNode::Identifier(id))),

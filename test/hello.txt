@@ -1,11 +1,28 @@
 hello() {
   var2 = 1234
+  var2 = -1234
+  var2 = 1234 + 1234
+  var2 = -1234 + 1234 + 1234
+  var2 = "Hello, World!"
+  var2 = true
+  var2 = false
+  main() {
+    var2 = 1234
+    var3 = 1234
+  }
+  main()
+  var4 = var1 - var2
+}
+
+hello() {
+  var2 = 1234
   var2 = 1234 + 1234
   var2 = 1234 + 1234 + 1234
   var2 = "Hello, World!"
-}
-
-main() {
-  var2 = 1234
-  var3 = 1234
+  var2 = true
+  var2 = false
+  main() {
+    var2 = 1234
+    var3 = 1234
+  }
 }

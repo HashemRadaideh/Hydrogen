@@ -43,6 +43,7 @@ pub fn print_tree(tree: &Tree) {
     for (i, node) in tree.iter().enumerate() {
         let last = i == tree.len() - 1;
         print_node(node, &mut indent, last);
+        println!();
     }
 
     fn print_node(node: &Node, indent: &mut Vec<&str>, last: bool) {
@@ -107,18 +108,45 @@ pub fn print_tree(tree: &Tree) {
                 println!("{} {} {}", left, op, right);
             }
             ASTNode::VariableDefinition(name, expr) => {
+                println!("[Variable Definition]");
                 print_node(name, indent, false);
                 print_node(expr, indent, true);
             }
             ASTNode::FunctionDefinition(id, params, body) => {
-                print_node(id, indent, true);
+                println!("[Function Definition]");
+                print_node(id, indent, false);
                 print_node(params, indent, false);
                 print_node(body, indent, true);
             }
-            ASTNode::Parameters(children)
-            | ASTNode::Block(children)
-            | ASTNode::FunctionCall(_, children)
-            | ASTNode::Arguments(children) => {
+            ASTNode::Parameters(children) => {
+                println!("[Parameters]");
+                let len = children.len();
+                for (i, child) in children.iter().enumerate() {
+                    let next_last = last && i == len - 1;
+                    let indent_next = if next_last { "    " } else { "│   " };
+                    indent.push(indent_next);
+                    print_node(child, indent, next_last);
+                    indent.pop();
+                }
+            }
+            ASTNode::Block(children) => {
+                println!("[Block]");
+                let len = children.len();
+                for (i, child) in children.iter().enumerate() {
+                    let next_last = last && i == len - 1;
+                    let indent_next = if next_last { "    " } else { "│   " };
+                    indent.push(indent_next);
+                    print_node(child, indent, next_last);
+                    indent.pop();
+                }
+            }
+            ASTNode::FunctionCall(name, arguments) => {
+                println!("[Function Call]");
+                print_node(name, indent, false);
+                print_node(arguments, indent, true);
+            }
+            ASTNode::Arguments(children) => {
+                println!("[Arguments]");
                 let len = children.len();
                 for (i, child) in children.iter().enumerate() {
                     let next_last = last && i == len - 1;
