@@ -10,6 +10,7 @@ use super::tokens::{Position, Token};
 /// - [x] tokenize operators
 /// - [ ] fix the number tokinizing to parse multiple formats of numbers
 /// - [ ] fix the string tokinizing to parse escaped characters
+/// - [ ] MAKE A ZERO COPY parser stop using String and use &str
 ///
 /// # Example of number formats
 /// ```

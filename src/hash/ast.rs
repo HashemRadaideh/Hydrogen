@@ -18,7 +18,7 @@ pub type Error = Box<ASTError>;
 pub type Errors = Vec<Error>;
 
 /// Enum representing different types of AST nodes
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ASTNode {
     StringType,
     StringLiteral(String),
@@ -114,10 +114,11 @@ impl fmt::Display for ASTNode {
 }
 
 /// Enum representing different types of AST errors
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ASTError {
     UnknownToken(Token),
     UnexpectedToken(Token),
+    EarlyEOF(Token),
     Errors(Errors),
 }
 
@@ -127,6 +128,7 @@ impl fmt::Display for ASTError {
             ASTError::UnknownToken(error) => write!(f, "ERROR: {}", error),
             ASTError::UnexpectedToken(error) => write!(f, "ERROR: {}", error),
             ASTError::Errors(errors) => write!(f, "ERROR: {:?}", errors),
+            ASTError::EarlyEOF(errors) => write!(f, "ERROR: {:?}", errors),
         }
     }
 }

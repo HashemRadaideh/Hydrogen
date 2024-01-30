@@ -55,6 +55,13 @@ use super::{
 /// - [ ] fix the parser's error propagation
 /// - [ ] clean the api of the parser
 /// - [ ] add user defined types
+/// - [ ] convert the parser into a ZERO COPY
+///
+/// # References to zero copy parser
+/// https://itnext.io/rust-the-joy-of-safe-zero-copy-parsers-8c8581db8ab2
+/// https://www.reddit.com/r/rust/comments/5msqlh/explainingillustrating_zerocopy/
+/// https://swatinem.de/blog/magic-zerocopy/
+/// https://www.roxlu.com/2015/052/building-a-zero-copy-parser
 #[derive(Debug, Clone)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -162,7 +169,7 @@ impl<'a> Parser<'a> {
                     }
                 }
                 Token::Colon(_) | Token::Equal(_) => {
-                    if let Ok(value) = self.parse_variable_definition() {
+                    if let Ok(value) = self.parse_variable() {
                         Ok(Box::new(ASTNode::VariableDefinition(
                             Box::new(ASTNode::Identifier(id)),
                             value[0].clone(),
@@ -274,7 +281,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_variable_definition(&mut self) -> Result<Nodes, Error> {
+    fn parse_variable(&mut self) -> Result<Nodes, Error> {
         let token = self.next();
         match token {
             Token::Equal(_) => {

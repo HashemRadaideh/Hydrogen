@@ -47,7 +47,7 @@ pub fn validate(content: &String) -> Result<Tree, Errors> {
 /// * `io::Result<()>` - Ok(()) if printing is successful, Err(io::Error) otherwise.
 pub fn print_ast(ast: Tree) -> io::Result<()> {
     io::stdout().execute(SetForegroundColor(Color::Green))?;
-    println!("{:?}", ast);
+    dbg!(ast.clone());
     io::stdout().execute(SetForegroundColor(Color::Blue))?;
     print_tree(&ast);
     io::stdout().execute(ResetColor)?;
@@ -63,9 +63,9 @@ pub fn print_ast(ast: Tree) -> io::Result<()> {
 /// # Returns
 ///
 /// * `io::Result<()>` - Ok(()) if printing is successful, Err(io::Error) otherwise.
-pub fn print_error(ast: Errors) -> io::Result<()> {
+pub fn print_error(errors: Errors) -> io::Result<()> {
     io::stdout().execute(SetForegroundColor(Color::Red))?;
-    println!("{:?}", ast);
+    dbg!(errors.clone());
     io::stdout().execute(ResetColor)?;
     Ok(())
 }
