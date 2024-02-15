@@ -85,11 +85,12 @@ impl<'a> Lexer<'a> {
                         '}' => Token::RightBrace(position),
                         '[' => Token::LeftBracket(position),
                         ']' => Token::RightBracket(position),
+                        ',' => Token::Comma(position),
                         '?' => Token::QuestionMark(position),
                         '$' => Token::DollarSign(position),
                         '#' => Token::Hash(position),
                         ':' => Token::Colon(position),
-                        '.' => Token::Point(position),
+                        '.' => Token::Dot(position),
                         '@' => Token::At(position),
                         '^' => match self.peek_char() {
                             Some(&c) => {
@@ -299,11 +300,11 @@ impl<'a> Lexer<'a> {
         match buffer.as_str() {
             "if" => Token::Keyword(current, buffer),
             "else" => Token::Keyword(current, buffer),
-            "for" => Token::Keyword(current, buffer),
-            "in" => Token::Keyword(current, buffer),
             "while" => Token::Keyword(current, buffer),
             "break" => Token::Keyword(current, buffer),
             "continue" => Token::Keyword(current, buffer),
+            "in" => Token::In(current),
+            "as" => Token::As(current),
             "num" => Token::Type(current, buffer),
             "str" => Token::Type(current, buffer),
             "bool" => Token::Type(current, buffer),

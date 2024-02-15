@@ -35,9 +35,12 @@ pub enum ASTNode {
     // FloatLiteral(f32),
     /// Variable definition: (identifier, type, expression)
     VariableDefinition(Node, Node, Node),
+    VariableDeclaration(Node, Node),
 
     /// Type: (type)
     Type(Option<Node>),
+
+    Array(Nodes),
 
     /// Unary expression: (operator, expression)
     UnaryExpression(Node, Node),
@@ -63,8 +66,17 @@ pub enum ASTNode {
     /// Arguments: (variables)
     Arguments(Nodes),
 
+    If(Node, Node, Node),
+
+    While(Node, Node),
+
     /// Delimiter end the parsing of the current statement
-    Delimiter,
+    ParenDelimiter,
+    BraceDelimiter,
+    BracketDelimiter,
+
+    /// Delimiter end the parsing of the current statement
+    Separator,
 }
 
 impl fmt::Display for ASTNode {
@@ -108,7 +120,17 @@ impl fmt::Display for ASTNode {
             ASTNode::StringType => write!(f, "str"),
             ASTNode::BooleanType => write!(f, "bool"),
             ASTNode::NumberType => write!(f, "num"),
-            ASTNode::Delimiter => todo!(),
+            ASTNode::If(_, _, _) => write!(f, "if"),
+            ASTNode::While(_, _) => write!(f, "while"),
+            ASTNode::Separator => write!(f, ","),
+            ASTNode::VariableDeclaration(name, t) => write!(f, "{}: {}", name, t),
+            ASTNode::Array(elements) => {
+                let elements_str: Vec<String> = elements.iter().map(|p| p.to_string()).collect();
+                write!(f, "({})", elements_str.join(", "))
+            }
+            ASTNode::ParenDelimiter => write!(f, ")"),
+            ASTNode::BraceDelimiter => write!(f, "}}"),
+            ASTNode::BracketDelimiter => write!(f, "]"),
         }
     }
 }
@@ -118,7 +140,6 @@ impl fmt::Display for ASTNode {
 pub enum ASTError {
     UnknownToken(Token),
     UnexpectedToken(Token),
-    EarlyEOF(Token),
     Errors(Errors),
 }
 
@@ -128,7 +149,6 @@ impl fmt::Display for ASTError {
             ASTError::UnknownToken(error) => write!(f, "ERROR: {}", error),
             ASTError::UnexpectedToken(error) => write!(f, "ERROR: {}", error),
             ASTError::Errors(errors) => write!(f, "ERROR: {:?}", errors),
-            ASTError::EarlyEOF(errors) => write!(f, "ERROR: {:?}", errors),
         }
     }
 }

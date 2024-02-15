@@ -7,6 +7,12 @@ pub struct Position {
     pub row: usize,
 }
 
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.col, self.row)
+    }
+}
+
 /// Enum representing different types of tokens
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
@@ -39,12 +45,15 @@ pub enum Token {
     ExplinationMark(Position),
     QuestionMark(Position),
     Colon(Position),
-    Point(Position),
+    Dot(Position),
+    Comma(Position),
     At(Position),
     Percent(Position),
     PercentEqual(Position),
     Caret(Position),
     CaretEqual(Position),
+    In(Position),
+    As(Position),
     Identifier(Position, String),
     Type(Position, String),
     Keyword(Position, String),
@@ -87,7 +96,7 @@ impl fmt::Display for Token {
             Token::ExplinationMark(_) => write!(f, "!"),
             Token::QuestionMark(_) => write!(f, "?"),
             Token::Colon(_) => write!(f, ":"),
-            Token::Point(_) => write!(f, "."),
+            Token::Dot(_) => write!(f, "."),
             Token::At(_) => write!(f, "@"),
             Token::Percent(_) => write!(f, "%"),
             Token::PercentEqual(_) => write!(f, "%="),
@@ -101,6 +110,9 @@ impl fmt::Display for Token {
             Token::Number(_, n) => write!(f, "Number({})", n),
             Token::Unknown(_, u) => write!(f, "Unknown({})", u),
             Token::EOF(_) => write!(f, "EOF"),
+            Token::In(_) => todo!(),
+            Token::As(_) => todo!(),
+            Token::Comma(_) => write!(f, "Comma"),
         }
     }
 }

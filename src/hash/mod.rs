@@ -99,6 +99,7 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("str");
             }
+
             ASTNode::BooleanType => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -113,6 +114,7 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("bool");
             }
+
             ASTNode::NumberType => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -127,6 +129,7 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("num");
             }
+
             ASTNode::BooleanLiteral(value) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -141,6 +144,7 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("{}", value);
             }
+
             ASTNode::StringLiteral(value)
             | ASTNode::NumberLiteral(value)
             | ASTNode::Identifier(value)
@@ -158,6 +162,7 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("{}", value);
             }
+
             ASTNode::Type(value) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -176,6 +181,7 @@ pub fn print_tree(tree: &Tree) {
                     None => {}
                 };
             }
+
             ASTNode::Return(value) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -194,6 +200,7 @@ pub fn print_tree(tree: &Tree) {
                     None => {}
                 };
             }
+
             ASTNode::UnaryExpression(op, expr) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -208,6 +215,7 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("{}{}", op, expr);
             }
+
             ASTNode::BinaryExpression(left, op, right) => {
                 if !indent.is_empty() {
                     for i in 0..indent.len() {
@@ -222,6 +230,14 @@ pub fn print_tree(tree: &Tree) {
                 }
                 println!("{} {} {}", left, op, right);
             }
+
+            ASTNode::VariableDeclaration(name, t) => {
+                println!("[Variable Declaration]");
+
+                print_node(name, indent, false);
+                print_node(t, indent, true);
+            }
+
             ASTNode::VariableDefinition(name, t, expr) => {
                 println!("[Variable Definition]");
 
@@ -229,6 +245,7 @@ pub fn print_tree(tree: &Tree) {
                 print_node(t, indent, false);
                 print_node(expr, indent, true);
             }
+
             ASTNode::FunctionDefinition(id, params, ret, body) => {
                 println!("[Function Definition]");
 
@@ -237,6 +254,7 @@ pub fn print_tree(tree: &Tree) {
                 print_node(ret, indent, false);
                 print_node(body, indent, true);
             }
+
             ASTNode::Parameters(children) => {
                 println!("[Parameters]");
 
@@ -249,6 +267,7 @@ pub fn print_tree(tree: &Tree) {
                     indent.pop();
                 }
             }
+
             ASTNode::Block(children) => {
                 println!("[Block]");
 
@@ -261,12 +280,14 @@ pub fn print_tree(tree: &Tree) {
                     indent.pop();
                 }
             }
+
             ASTNode::FunctionCall(name, arguments) => {
                 println!("[Function Call]");
 
                 print_node(name, indent, false);
                 print_node(arguments, indent, true);
             }
+
             ASTNode::Arguments(children) => {
                 println!("[Arguments]");
 
@@ -279,7 +300,39 @@ pub fn print_tree(tree: &Tree) {
                     indent.pop();
                 }
             }
-            ASTNode::Delimiter => todo!(),
+
+            ASTNode::If(condition, affermative, negative) => {
+                println!("[If]");
+
+                print_node(condition, indent, false);
+                print_node(affermative, indent, false);
+                print_node(negative, indent, true);
+            }
+
+            ASTNode::While(condition, body) => {
+                println!("[While]");
+
+                print_node(condition, indent, false);
+                print_node(body, indent, true);
+            }
+
+            ASTNode::Array(children) => {
+                println!("[Array]");
+
+                let len = children.len();
+                for (i, child) in children.iter().enumerate() {
+                    let next_last = last && i == len - 1;
+                    let indent_next = if next_last { "    " } else { "│   " };
+                    indent.push(indent_next);
+                    print_node(child, indent, next_last);
+                    indent.pop();
+                }
+            }
+
+            ASTNode::ParenDelimiter => todo!(),
+            ASTNode::BraceDelimiter => todo!(),
+            ASTNode::BracketDelimiter => todo!(),
+            ASTNode::Separator => todo!(),
         }
     }
 
