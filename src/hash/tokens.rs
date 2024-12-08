@@ -61,7 +61,7 @@ pub enum Token {
     Boolean(Position, String),
     Number(Position, String),
     Unknown(Position, String),
-    EOF(Position),
+    Eof(Position),
 }
 
 impl fmt::Display for Token {
@@ -109,7 +109,7 @@ impl fmt::Display for Token {
             Token::Boolean(_, b) => write!(f, "Boolean({})", b),
             Token::Number(_, n) => write!(f, "Number({})", n),
             Token::Unknown(_, u) => write!(f, "Unknown({})", u),
-            Token::EOF(_) => write!(f, "EOF"),
+            Token::Eof(_) => write!(f, "EOF"),
             Token::In(_) => todo!(),
             Token::As(_) => todo!(),
             Token::Comma(_) => write!(f, "Comma"),

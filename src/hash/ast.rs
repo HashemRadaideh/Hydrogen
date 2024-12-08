@@ -77,6 +77,8 @@ pub enum ASTNode {
 
     /// Delimiter end the parsing of the current statement
     Separator,
+
+    End,
 }
 
 impl fmt::Display for ASTNode {
@@ -131,6 +133,7 @@ impl fmt::Display for ASTNode {
             ASTNode::ParenDelimiter => write!(f, ")"),
             ASTNode::BraceDelimiter => write!(f, "}}"),
             ASTNode::BracketDelimiter => write!(f, "]"),
+            ASTNode::End => todo!(),
         }
     }
 }

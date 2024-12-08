@@ -1,3 +1,6 @@
+hi() {
+  print()
+}
 
 main(param: num, param2: str) {
   var1: num = 1234

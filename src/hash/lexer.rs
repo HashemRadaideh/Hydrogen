@@ -78,20 +78,31 @@ impl<'a> Lexer<'a> {
                     self.collect_number()
                 } else {
                     let (position, current) = self.next_char();
+
                     match current {
                         '(' => Token::LeftParenthesis(position),
                         ')' => Token::RightParenthesis(position),
+
                         '{' => Token::LeftBrace(position),
                         '}' => Token::RightBrace(position),
+
                         '[' => Token::LeftBracket(position),
                         ']' => Token::RightBracket(position),
+
                         ',' => Token::Comma(position),
+
                         '?' => Token::QuestionMark(position),
+
                         '$' => Token::DollarSign(position),
+
                         '#' => Token::Hash(position),
+
                         ':' => Token::Colon(position),
+
                         '.' => Token::Dot(position),
+
                         '@' => Token::At(position),
+
                         '^' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -103,6 +114,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Caret(position),
                         },
+
                         '%' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -114,6 +126,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Percent(position),
                         },
+
                         '+' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -125,6 +138,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Plus(position),
                         },
+
                         '-' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -136,6 +150,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Minus(position),
                         },
+
                         '*' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -147,6 +162,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Asterisk(position),
                         },
+
                         '/' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '/' {
@@ -162,6 +178,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Slash(position),
                         },
+
                         '=' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -173,6 +190,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Equal(position),
                         },
+
                         '!' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -184,6 +202,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::ExplinationMark(position),
                         },
+
                         '>' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -195,6 +214,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::GreaterThan(position),
                         },
+
                         '<' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '=' {
@@ -206,6 +226,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::LessThan(position),
                         },
+
                         '&' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '&' {
@@ -217,6 +238,7 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Ampersand(position),
                         },
+
                         '|' => match self.peek_char() {
                             Some(&c) => {
                                 if c == '|' {
@@ -228,11 +250,12 @@ impl<'a> Lexer<'a> {
                             }
                             None => Token::Unknown(position, current.to_string()),
                         },
+
                         _ => Token::Unknown(position, current.to_string()),
                     }
                 }
             }
-            None => Token::EOF(self.position.clone()),
+            None => Token::Eof(self.position.clone()),
         }
     }
 
@@ -380,7 +403,7 @@ mod test {
 
         loop {
             let token = lexer.lex();
-            if let Token::EOF(_) = token {
+            if let Token::Eof(_) = token {
                 break;
             }
             tokens.push(token);

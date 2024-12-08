@@ -9,7 +9,7 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 
-use crate::hash::{print_ast, validate};
+use crate::hash::evaluator::Evaluator;
 use crate::repl::cell::Cell;
 use crate::repl::linebuffer::LineBuffer;
 use crate::repl::mode::CursorMode;
@@ -103,6 +103,7 @@ pub fn repl(mode: String) -> Result<()> {
                             stdout.queue(Print(c))?;
                             stdout.flush()?;
                         }
+
                         KeyCode::Enter => {
                             // let (_, ok) = validate(&line.buffer);
                             // if ok {
@@ -111,20 +112,31 @@ pub fn repl(mode: String) -> Result<()> {
                             //     prompt(&mut stdout, "... ")?;
                             // }
                         }
+
                         KeyCode::Backspace => {}
+
                         KeyCode::Delete => {}
+
                         KeyCode::Up => {}
+
                         KeyCode::Left => {}
+
                         KeyCode::Down => {}
+
                         KeyCode::Right => {}
+
                         _ => {}
                     },
+
                     Event::Mouse(_) => {}
+
                     Event::Resize(width, height) => {
                         print_message(&mut stdout, &format!("width: {width}, height: {height}"))?;
                     }
+
                     _ => {}
                 },
+
                 CursorMode::Vi => match read()? {
                     Event::Key(KeyEvent {
                         code, modifiers, ..
@@ -138,21 +150,32 @@ pub fn repl(mode: String) -> Result<()> {
                             stdout.queue(Print(c))?;
                             stdout.flush()?;
                         }
+
                         KeyCode::Enter => {}
+
                         KeyCode::Backspace => {}
+
                         KeyCode::Delete => {}
+
                         KeyCode::Up => {}
+
                         KeyCode::Left => {}
+
                         KeyCode::Down => {}
+
                         KeyCode::Right => {}
+
                         _ => {}
                     },
+
                     Event::Mouse(_) => {}
+
                     Event::Resize(width, height) => {
                         print_message(&mut stdout, &format!("width: {width}, height: {height}"))?;
                     }
                     _ => {}
                 },
+
                 CursorMode::Emacs => match read()? {
                     Event::Key(KeyEvent {
                         code, modifiers, ..
@@ -167,15 +190,24 @@ pub fn repl(mode: String) -> Result<()> {
                             stdout.flush()?;
                         }
                         KeyCode::Enter => {}
+
                         KeyCode::Backspace => {}
+
                         KeyCode::Delete => {}
+
                         KeyCode::Up => {}
+
                         KeyCode::Left => {}
+
                         KeyCode::Down => {}
+
                         KeyCode::Right => {}
+
                         _ => {}
                     },
+
                     Event::Mouse(_) => {}
+
                     Event::Resize(width, height) => {
                         print_message(&mut stdout, &format!("width: {width}, height: {height}"))?;
                     }
@@ -185,19 +217,9 @@ pub fn repl(mode: String) -> Result<()> {
         }
         terminal::disable_raw_mode()?;
         println!();
-        let ast = validate(&line.buffer);
-        match ast {
-            Ok(tree) => {
-                stdout.execute(SetForegroundColor(Color::Red))?;
-                print_ast(tree)?;
-                stdout.execute(ResetColor)?;
-
-                line.buffer.clear();
-            }
-            Err(errors) => {
-                println!("{:?}", errors)
-            }
-        }
+        let mut evaluator = Evaluator::new(&line.buffer);
+        evaluator.eval();
+        line.buffer.clear();
     }
 
     terminal::disable_raw_mode()?;

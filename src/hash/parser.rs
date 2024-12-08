@@ -1,5 +1,5 @@
 use super::{
-    ast::{ASTError, ASTNode, Error, Errors, Node, Nodes},
+    ast::{ASTError, ASTNode, Error, Node, Nodes},
     lexer::Lexer,
     tokens::Token,
 };
@@ -72,54 +72,35 @@ impl<'a> Parser<'a> {
     /// Creates a new Parser instance with the given program source code.
     pub fn new(program: &'a str) -> Self {
         Self {
-            lexer: Lexer::new(&program),
+            lexer: Lexer::new(program),
         }
     }
 
     /// Advances the lexer and returns the next token.
     fn next(&mut self) -> Token {
-        let token = self.lexer.lex();
-        // println!("{:?}", token);
-        token
+        self.lexer.lex()
     }
 
     /// Peeks at the next token without advancing the lexer.
     fn peek(&mut self) -> Token {
-        let token = self.lexer.peek();
-        // println!("{:?}", token);
-        token
+        self.lexer.peek()
     }
 
     /// Parses the entire program and returns the abstract syntax tree.
-    pub fn parse(&mut self) -> Result<Nodes, Errors> {
-        let mut program = Vec::new();
-        let mut errors = Vec::new();
-
-        loop {
-            match self.peek() {
-                Token::Unknown(_, _) => {
-                    let token = self.next();
-                    errors.push(Box::new(ASTError::UnknownToken(token)));
-                }
-
-                Token::EOF(_) => break,
-
-                _ => match self.parse_node() {
-                    Ok(node) => {
-                        program.push(node);
-                    }
-
-                    Err(error) => {
-                        errors.push(error);
-                    }
-                },
+    pub fn parse(&mut self) -> Result<Node, Error> {
+        match self.peek() {
+            Token::Unknown(_, _) => {
+                let token = self.next();
+                Err(Box::new(ASTError::UnknownToken(token)))
             }
-        }
 
-        if errors.is_empty() {
-            Ok(program.clone())
-        } else {
-            Err(errors.clone())
+            Token::Eof(_) => Ok(Box::new(ASTNode::End)),
+
+            _ => match self.parse_node() {
+                Ok(node) => Ok(node),
+
+                Err(error) => Err(error),
+            },
         }
     }
 
@@ -139,13 +120,7 @@ impl<'a> Parser<'a> {
 
             Token::String(_, string) => Ok(Box::new(ASTNode::StringLiteral(string))),
             Token::Number(_, number) => Ok(Box::new(ASTNode::NumberLiteral(number))),
-            Token::Boolean(_, boolean) => {
-                Ok(Box::new(ASTNode::BooleanLiteral(if boolean == "true" {
-                    true
-                } else {
-                    false
-                })))
-            }
+            Token::Boolean(_, boolean) => Ok(Box::new(ASTNode::BooleanLiteral(boolean == "true"))),
 
             Token::Type(_, t) => {
                 if t == "num" {

@@ -32,12 +32,12 @@ use clap::Parser;
 mod hash;
 mod repl;
 
-use hash::{print_ast, print_error, validate};
+use hash::evaluator::Evaluator;
 use repl::repl;
 
 /// Command-line options for the Hydrogen program.
 #[derive(Parser, Debug)]
-#[clap(name = "hydrogen", about = "A simple programming langauge!")]
+#[clap(name = "hydrogen", about = "A simple programming language!")]
 struct Opt {
     /// Specify the cursor mode for the REPL (default is "normal").
     #[clap(short = 'm', long = "mode", default_value = "normal")]
@@ -58,12 +58,9 @@ fn main() -> Result<()> {
         repl(opt.mode)?;
     } else {
         // Read and validate code from the specified script file.
-        let ast = validate(&fs::read_to_string(Path::new("test/hello.hy")).unwrap());
-        // Print the AST or errors based on validation result.
-        match ast {
-            Ok(tree) => print_ast(tree)?,
-            Err(error) => print_error(error)?,
-        }
+        let path = fs::read_to_string(Path::new("test/hello.hy")).unwrap();
+        let mut evaluator = Evaluator::new(&path);
+        evaluator.eval();
     }
 
     Ok(())

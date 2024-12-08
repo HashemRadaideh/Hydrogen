@@ -1,10 +1,12 @@
 # A simple programming language implemented in rust
 
 ## Features
-  - simplicity?
-  - uniqueness?
+
+- simplicity?
+- uniqueness?
 
 ## Syntax
+
 $$
 \documentclass{article}
 \begin{document}
